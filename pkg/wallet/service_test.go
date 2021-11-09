@@ -77,10 +77,11 @@ func TestService_FindPaymentByID_success(t *testing.T) {
 	if err2 != nil {
 		t.Error(err2)
 	}
-	_, err3 := s.FindPaymentByID(pay.ID)
+	paym, _ := s.FindPaymentByID(pay.ID)
 
-	if !reflect.DeepEqual(nil, err3) {
-		t.Errorf("invalid result, expected: %v, actual: %v", nil, err3)
+	expected := pay
+	if !reflect.DeepEqual(expected, paym) {
+		t.Errorf("invalid result, expected: %v, actual: %v", expected, paym)
 	}
 }
 
