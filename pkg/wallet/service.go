@@ -75,7 +75,7 @@ func (s *Service) Pay(accountID int64, amount types.Money, category types.Paymen
 	}
 
 	account.Balance -= amount
-	paymentID := "4122"
+	paymentID := uuid.New().String()
 	payment := &types.Payment{
 		ID: paymentID,
 		AccountID: accountID,
