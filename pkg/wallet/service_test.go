@@ -150,7 +150,7 @@ func TestService_FindPaymentByID_notFound(t *testing.T) {
 func TestService_Repeat_success(t *testing.T) {
 		// создаем сервис
 		s := newTestService()
-		account, payments, err := s.addAccount(defaultTestAccount)
+		_, payments, err := s.addAccount(defaultTestAccount)
 		if err != nil {
 			t.Error(err)
 			return
@@ -162,8 +162,7 @@ func TestService_Repeat_success(t *testing.T) {
 			t.Errorf("Repeat(): error = %v", err)
 			return
 		}
-		account.Balance -= payment.Amount
-
+			
 		got, err := s.FindPaymentByID(repeated.ID)
 		if err != nil{
 			t.Errorf("FindPaymentByID(): error = %v", err)
