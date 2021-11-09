@@ -13,12 +13,15 @@ var ErrAmountMustBePositive = errors.New("amount must be greater than 0")
 var ErrAccountNotFound = errors.New("account not found")
 var ErrPaymentNotFound = errors.New("payment not found")
 var ErrNotEnoughBalance = errors.New("not enough balance")
+var ErrFavoriteNotFound = errors.New("favorite not found")
 
 type Service struct {
 	nextAccountID int64
 	accounts []*types.Account
 	payments []*types.Payment
+	favorites []*types.Favorite
 }
+
 
 func (s *Service) RegisterAccount(phone types.Phone)(*types.Account, error){
 	for _, account := range s.accounts {
@@ -75,7 +78,7 @@ func (s *Service) Pay(accountID int64, amount types.Money, category types.Paymen
 	}
 
 	account.Balance -= amount
-	paymentID := "4122"
+	paymentID := uuid.New().String()
 	payment := &types.Payment{
 		ID: paymentID,
 		AccountID: accountID,
@@ -126,34 +129,17 @@ func (s *Service) Reject(paymentID string) error{
 	return err
 } 
 
-type testService struct{
-	*Service
-}
-
-func newTestService() *testService{
-	return &testService{Service: &Service{}}
-}
-// Функция добавления аккаунта и баланса в нем
-func (s * testService) AddAccountWithBalance(phone types.Phone, balance types.Money) (*types.Account, error){
-	// регистрируем пользователя
-	account, err := s.RegisterAccount(phone)
-	if(err != nil){
-		return nil, fmt.Errorf("can't register account, error = %v", err)
-	}
-
-	//пополняем его счет
-	err = s.Deposit(account.ID, balance)
-	if(err != nil){
-		return nil, fmt.Errorf("can't deposit account, error = %v", err)
-	}
-
-	return account, nil
-}
-
 func (s *Service) Repeat(paymentID string)(*types.Payment, error)  {
 	payment, err := s.FindPaymentByID(paymentID)
 	if err != nil{
 		return nil, fmt.Errorf("FindPaymentByID(): can't find payment, error = %v", err)
+	}
+	if payment != nil {
+		account, err := s.FindAccountByID(payment.AccountID)
+		if account == nil{
+			return nil, fmt.Errorf("FindAccountByID(): can't find account, error = %v", err)
+		}	
+		account.Balance -= payment.Amount
 	}
 	newPayment := &types.Payment{
 		ID: 			uuid.New().String(), 
@@ -165,3 +151,44 @@ func (s *Service) Repeat(paymentID string)(*types.Payment, error)  {
 	s.payments = append(s.payments, newPayment)
 	return newPayment, nil
 }
+// FavoritePayment - создаёт избранное из конкретного платежа
+func (s *Service) FavoritePayment(paymentID string, name string)(*types.Favorite, error)  {
+	payment, err := s.FindPaymentByID(paymentID)
+	if err != nil{
+		return nil, fmt.Errorf("FindPaymentByID(): can't find payment, error = %v", err)
+	}
+	favorite := &types.Favorite{
+		ID: uuid.New().String(),
+		AccountID: payment.AccountID,
+		Name: name,
+		Amount: payment.Amount,
+		Category: payment.Category,
+	}
+	s.favorites = append(s.favorites, favorite)
+	return favorite, nil
+}
+
+//PayFromFavorite – совершает платёж из конкретного избранного
+func (s *Service) PayFromFavorite(favoriteID string)(*types.Payment, error) {
+	for _, favorite := range s.favorites{
+		if(favorite.ID == favoriteID){
+			account, err := s.FindAccountByID(favorite.AccountID)
+			if err != nil{
+				return nil, fmt.Errorf("FindAccountByID(): can't find account, error = %v", err)
+			}
+			payment := &types.Payment{
+				ID: uuid.New().String(),
+				AccountID: favorite.AccountID,
+				Amount: favorite.Amount,
+				Category: favorite.Category,
+				Status: types.PaymentStatusInProgress,
+			}
+			account.Balance -= favorite.Amount
+			s.payments = append(s.payments, payment)
+			return payment, nil
+		}
+	}
+	return nil, fmt.Errorf("PayFromFavorite(): can't find favorite, error = %v", ErrFavoriteNotFound)
+}
+
+

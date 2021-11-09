@@ -20,7 +20,10 @@ func main() {
 	}
 
 	pay, _ := svc.Pay(1, 1000,"bank")
-		err2 := svc.Reject(pay.ID)
-	fmt.Println(err2)//10
-	fmt.Println(account.Balance)//10
+	//err2 := svc.Reject(pay.ID)
+	
+	payment2,err := svc.Repeat(pay.ID)
+	payment, err := svc.FindAccountByID(payment2.AccountID)
+	//fmt.Println(err2)//10
+	fmt.Println(payment)//10
 }
