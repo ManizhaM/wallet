@@ -102,8 +102,10 @@ func (s *Service) FindAccountByID(accountID int64)(*types.Account,error){
 func (s *Service) FindPaymentByID(paymentID string)(*types.Payment, error){
 	var payment *types.Payment
 	for _, pay := range s.payments {
-		payment = pay
-		return payment, nil		
+		if pay.ID == paymentID {
+			payment = pay
+			return payment, nil	
+		}	
 	}
 	return nil, ErrPaymentNotFound
 }
