@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ManizhaM/wallet/pkg/types"
+	"github.com/google/uuid"
 )
 
 var ErrPhoneRegistered = errors.New("phone already registered")
@@ -147,4 +148,20 @@ func (s * testService) AddAccountWithBalance(phone types.Phone, balance types.Mo
 	}
 
 	return account, nil
+}
+
+func (s *Service) Repeat(paymentID string)(*types.Payment, error)  {
+	payment, err := s.FindPaymentByID(paymentID)
+	if err != nil{
+		return nil, fmt.Errorf("FindPaymentByID(): can't find payment, error = %v", err)
+	}
+	newPayment := &types.Payment{
+		ID: 			uuid.New().String(), 
+		AccountID: 		payment.AccountID,
+		Amount: 		payment.Amount,
+		Category: 		payment.Category,
+		Status: 		payment.Status,			
+	}
+	s.payments = append(s.payments, newPayment)
+	return newPayment, nil
 }
