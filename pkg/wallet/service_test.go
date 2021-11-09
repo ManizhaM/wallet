@@ -172,3 +172,63 @@ func TestService_Repeat_success(t *testing.T) {
 			t.Errorf("FindPaymentByID(): wrong payment returned, error: %v", err)
 		}
 }
+
+
+func TestService_FavoritePayment_success(t *testing.T) {
+		// создаем сервис
+		s := newTestService()
+		_, payments, err := s.addAccount(defaultTestAccount)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		//находим платеж
+		payment := payments[0]
+		favorite, err := s.FavoritePayment(payment.ID, "new favorite")
+		if err != nil{
+			t.Errorf("FavoritePayment(): error = %v", err)
+			return
+		}
+		expected := &types.Favorite{}
+		for _, fav := range s.favorites {
+			if(favorite == fav){
+				expected = fav
+			}
+		}
+		//сравниваем платежи
+		if !reflect.DeepEqual(expected, favorite) {
+			t.Errorf("FavoritePayment(): wrong favorite returned, error: %v", err)
+		}
+}
+
+func TestService_PayFromFavorite_success(t *testing.T) {
+	// создаем сервис
+	s := newTestService()
+	_, payments, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	//находим платеж
+	payment := payments[0]
+	favorite, err := s.FavoritePayment(payment.ID, "new favorite")
+	if err != nil{
+		t.Errorf("FavoritePayment(): error = %v", err)
+		return
+	}
+	pay,err := s.PayFromFavorite(favorite.ID)
+	if err != nil{
+		t.Errorf("PayFromFavorite(): error = %v", err)
+		return
+	}
+	got, err := s.FindPaymentByID(pay.ID)
+	if err != nil{
+		t.Errorf("FindPaymentByID(): error = %v", err)
+		return
+	}
+	//сравниваем платежи
+	if !reflect.DeepEqual(got, pay) {
+		t.Errorf("PayFromFavorite(): error: %v", err)
+	}
+
+}
