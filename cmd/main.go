@@ -13,11 +13,14 @@ func main() {
 		return
 	}
 
-	err = svc.Deposit(account.ID, 10)
+	err = svc.Deposit(account.ID, 2000)
 	if err != nil {
 		fmt.Println(account, err)
 		return
 	}
 
-	fmt.Println(account.ID)//10
+	pay, _ := svc.Pay(1, 1000,"bank")
+		err2 := svc.Reject(pay.ID)
+	fmt.Println(err2)//10
+	fmt.Println(account.Balance)//10
 }
