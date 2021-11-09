@@ -64,24 +64,25 @@ func TestService_Reject_notFound(t *testing.T) {
 
 
 func TestService_FindPaymentByID_success(t *testing.T) {
-	s := &Service{}
-	acc, err := s.RegisterAccount("+992000000001")
+	// создаем сервис
+	s := newTestService()
+	account, err := s.AddAccountWithBalance("+992000000001", 1000000)
 	if err != nil {
 		t.Error(err)
+		return
 	}
-	err1 := s.Deposit(acc.ID, 2000)
-	if err1 != nil {
-		t.Error(err1)
+	//осуществляем платеж на его счет
+	payment, err := s.Pay(account.ID, 100000, "auto")
+	if err != nil {
+		t.Errorf("Pay(): can't create payment, error = %v", err)
 	}
-	pay, err2 := s.Pay(1, 1000, "auto")
-	if err2 != nil {
-		t.Error(err2)
+	got, err := s.FindPaymentByID(payment.ID)
+	if err != nil{
+		t.Errorf("FindPaymentByID(): error = %v", err)
 	}
-	paym, _ := s.FindPaymentByID(pay.ID)
-
-	expected := pay
-	if !reflect.DeepEqual(expected, paym) {
-		t.Errorf("invalid result, expected: %v, actual: %v", expected, paym)
+	//сравниваем платежи
+	if !reflect.DeepEqual(got, payment) {
+		t.Errorf("invalid result, expected: %v, actual: %v", got, payment)
 	}
 }
 
