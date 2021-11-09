@@ -2,9 +2,10 @@ package wallet
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/ManizhaM/wallet/pkg/types"
-	
+	"github.com/google/uuid"
 )
 
 var ErrPhoneRegistered = errors.New("phone already registered")
@@ -102,8 +103,10 @@ func (s *Service) FindAccountByID(accountID int64)(*types.Account,error){
 func (s *Service) FindPaymentByID(paymentID string)(*types.Payment, error){
 	var payment *types.Payment
 	for _, pay := range s.payments {
-		payment = pay
-		return payment, nil		
+		if pay.ID == paymentID {
+			payment = pay
+			return payment, nil	
+		}	
 	}
 	return nil, ErrPaymentNotFound
 }
@@ -112,10 +115,53 @@ func (s *Service) FindPaymentByID(paymentID string)(*types.Payment, error){
 func (s *Service) Reject(paymentID string) error{
 	payment, err := s.FindPaymentByID(paymentID)
 	if payment != nil{
+		account, err1 := s.FindAccountByID(payment.AccountID)
+		if account == nil{
+			return err1
+		}
 		payment.Status = types.PaymentStatusFail
-		account, _ := s.FindAccountByID(payment.AccountID)
 		account.Balance += payment.Amount
 		return nil
 	 }
 	return err
 } 
+
+type testService struct{
+	*Service
+}
+
+func newTestService() *testService{
+	return &testService{Service: &Service{}}
+}
+// Функция добавления аккаунта и баланса в нем
+func (s * testService) AddAccountWithBalance(phone types.Phone, balance types.Money) (*types.Account, error){
+	// регистрируем пользователя
+	account, err := s.RegisterAccount(phone)
+	if(err != nil){
+		return nil, fmt.Errorf("can't register account, error = %v", err)
+	}
+
+	//пополняем его счет
+	err = s.Deposit(account.ID, balance)
+	if(err != nil){
+		return nil, fmt.Errorf("can't deposit account, error = %v", err)
+	}
+
+	return account, nil
+}
+
+func (s *Service) Repeat(paymentID string)(*types.Payment, error)  {
+	payment, err := s.FindPaymentByID(paymentID)
+	if err != nil{
+		return nil, fmt.Errorf("FindPaymentByID(): can't find payment, error = %v", err)
+	}
+	newPayment := &types.Payment{
+		ID: 			uuid.New().String(), 
+		AccountID: 		payment.AccountID,
+		Amount: 		payment.Amount,
+		Category: 		payment.Category,
+		Status: 		payment.Status,			
+	}
+	s.payments = append(s.payments, newPayment)
+	return newPayment, nil
+}
