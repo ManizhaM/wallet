@@ -66,23 +66,22 @@ func TestService_Reject_notFound(t *testing.T) {
 func TestService_FindPaymentByID_success(t *testing.T) {
 	// создаем сервис
 	s := newTestService()
-	account, err := s.AddAccountWithBalance("+992000000001", 1000000)
+	_, payments, err := s.addAccount(defaultTestAccount)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	//осуществляем платеж на его счет
-	payment, err := s.Pay(account.ID, 100000, "auto")
-	if err != nil {
-		t.Errorf("Pay(): can't create payment, error = %v", err)
-	}
+	//ищем платеж
+	payment := payments[0]
 	got, err := s.FindPaymentByID(payment.ID)
 	if err != nil{
 		t.Errorf("FindPaymentByID(): error = %v", err)
+		return
 	}
 	//сравниваем платежи
-	if !reflect.DeepEqual(got, payment) {
-		t.Errorf("invalid result, expected: %v, actual: %v", got, payment)
+	if !reflect.DeepEqual(payment, got) {
+		t.Errorf("FindPaymentByID(): wrong payment returned = %v", err)
+		return
 	}
 }
 
@@ -98,19 +97,17 @@ func TestService_FindPaymentByID_notFound(t *testing.T) {
 func TestService_Repeat_success(t *testing.T) {
 		// создаем сервис
 		s := newTestService()
-		account, err := s.AddAccountWithBalance("+992000000001", 1000000)
+		_, payments, err := s.addAccount(defaultTestAccount)
 		if err != nil {
 			t.Error(err)
 			return
 		}
 		//осуществляем платеж на его счет
-		payment, err := s.Pay(account.ID, 100000, "auto")
-		if err != nil {
-			t.Errorf("Pay(): can't create payment, error = %v", err)
-		}
+		payment := payments[0]
 		repeated, err := s.Repeat(payment.ID)
 		if err != nil{
 			t.Errorf("Repeat(): error = %v", err)
+			return
 		}
 
 		got, err := s.FindPaymentByID(repeated.ID)
@@ -118,7 +115,7 @@ func TestService_Repeat_success(t *testing.T) {
 			t.Errorf("FindPaymentByID(): error = %v", err)
 		}
 		//сравниваем платежи
-		if !reflect.DeepEqual(got, repeated) {
-			t.Errorf("invalid result, expected: %v, actual: %v", got, payment)
+		if !reflect.DeepEqual(repeated, got) {
+			t.Errorf("FindPaymentByID(): wrong payment returned, error: %v", err)
 		}
 }
