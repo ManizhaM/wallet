@@ -20,27 +20,6 @@ type Service struct {
 	payments []*types.Payment
 }
 
-type testAccount struct{
-	phone 		types.Phone
-	balance		types.Money
-	payments	[]struct{
-		amount		types.Money
-		category	types.PaymentCategory
-	}
-}
-
-var defaultTestAccount = testAccount{
-	phone: 		"+992000000001",
-	balance: 	1000000,
-	payments: 	[]struct{
-		amount types.Money;
-		category types.PaymentCategory
-	}{
-		{amount: 100000, category: "auto"},
-	},
-}	
-
-
 func (s *Service) RegisterAccount(phone types.Phone)(*types.Account, error){
 	for _, account := range s.accounts {
 		if account.Phone == phone {
@@ -146,38 +125,6 @@ func (s *Service) Reject(paymentID string) error{
 	 }
 	return err
 } 
-
-type testService struct{
-	*Service
-}
-
-func newTestService() *testService{
-	return &testService{Service: &Service{}}
-}
-// Функция добавления аккаунта и баланса в нем
-func (s * testService) addAccount(data testAccount) (*types.Account, []*types.Payment, error){
-	// регистрируем пользователя
-	account, err := s.RegisterAccount(data.phone)
-	if(err != nil){
-		return nil, nil, fmt.Errorf("can't register account, error = %v", err)
-	}
-
-	//пополняем его счет
-	err = s.Deposit(account.ID, data.balance)
-	if(err != nil){
-		return nil, nil, fmt.Errorf("can't deposit account, error = %v", err)
-	}
-
-	payments := make([]*types.Payment, len(data.payments))
-	for i, payment := range data.payments {
-		payments[i], err = s.Pay(account.ID, payment.amount, payment.category)
-		if err != nil {
-			return nil, nil, fmt.Errorf("can't make payment, error = %v", err)
-		}
-	}
-
-	return account, payments, nil
-}
 
 func (s *Service) Repeat(paymentID string)(*types.Payment, error)  {
 	payment, err := s.FindPaymentByID(paymentID)
