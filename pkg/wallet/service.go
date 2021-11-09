@@ -50,3 +50,14 @@ func (s *Service) Deposit(accountID int64, amount types.Money) error {
 	account.Balance += amount
 	return nil
 }
+//FindAccountByID возвращает указатель на найденный аккаунт 
+func (s *Service) FindAccountByID(accountID int64)(*types.Account,error){
+	var account *types.Account
+	for _, acc := range s.accounts {
+		if(acc.ID == accountID){
+			account = acc
+			return account, nil
+		}
+	}
+	return nil, ErrAccountNotFound
+}
