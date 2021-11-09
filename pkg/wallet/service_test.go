@@ -94,3 +94,31 @@ func TestService_FindPaymentByID_notFound(t *testing.T) {
 		t.Errorf("invalid result, expected: %v, actual: %v", expected, err)
 	}
 }
+
+func TestService_Repeat_success(t *testing.T) {
+		// создаем сервис
+		s := newTestService()
+		account, err := s.AddAccountWithBalance("+992000000001", 1000000)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		//осуществляем платеж на его счет
+		payment, err := s.Pay(account.ID, 100000, "auto")
+		if err != nil {
+			t.Errorf("Pay(): can't create payment, error = %v", err)
+		}
+		repeated, err := s.Repeat(payment.ID)
+		if err != nil{
+			t.Errorf("Repeat(): error = %v", err)
+		}
+
+		got, err := s.FindPaymentByID(repeated.ID)
+		if err != nil{
+			t.Errorf("FindPaymentByID(): error = %v", err)
+		}
+		//сравниваем платежи
+		if !reflect.DeepEqual(got, repeated) {
+			t.Errorf("invalid result, expected: %v, actual: %v", got, payment)
+		}
+}
